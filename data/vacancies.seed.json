@@ -1,0 +1,67 @@
+[
+  {
+    "id": "sea-frontend-eng",
+    "title": "Senior Frontend Engineer",
+    "company": "Northwind Labs",
+    "location": "Berlin, Germany",
+    "remote": true,
+    "type": "Full-time",
+    "salaryMin": 85000,
+    "salaryMax": 110000,
+    "description": "Own the design system and core product surfaces of our recruiting platform. You will work in React and TypeScript, partner closely with design, and mentor other engineers. Experience with accessibility and performance profiling is a strong plus.",
+    "tags": ["React", "TypeScript", "Design Systems", "Accessibility"],
+    "postedAt": "2026-09-10T09:00:00.000Z"
+  },
+  {
+    "id": "product-designer",
+    "title": "Product Designer",
+    "company": "Aurora Health",
+    "location": "Remote (EU)",
+    "remote": true,
+    "type": "Full-time",
+    "salaryMin": 70000,
+    "salaryMax": 95000,
+    "description": "Shape the end-to-end experience of a healthcare scheduling product used by thousands of clinics. You will run discovery, prototype quickly, and validate with real users. Comfortable moving between low-fidelity wireframes and polished UI.",
+    "tags": ["Figma", "UX Research", "Prototyping"],
+    "postedAt": "2026-09-14T12:30:00.000Z"
+  },
+  {
+    "id": "backend-contract",
+    "title": "Backend Engineer (Go)",
+    "company": "Ledgerline",
+    "location": "London, UK",
+    "remote": false,
+    "type": "Contract",
+    "salaryMin": 600,
+    "salaryMax": 750,
+    "description": "Six month contract to help scale our payments ledger. Strong Go and PostgreSQL experience required. You will design idempotent APIs, improve observability, and harden our reconciliation pipeline. Day rate listed in GBP.",
+    "tags": ["Go", "PostgreSQL", "Payments", "Distributed Systems"],
+    "postedAt": "2026-09-16T08:15:00.000Z"
+  },
+  {
+    "id": "data-intern",
+    "title": "Data Science Intern",
+    "company": "Meridian Analytics",
+    "location": "Amsterdam, Netherlands",
+    "remote": false,
+    "type": "Internship",
+    "salaryMin": 2200,
+    "salaryMax": 2600,
+    "description": "Join our applied ML team for a summer internship. You will help build forecasting models, run experiments, and present findings to stakeholders. Coursework in statistics and hands-on Python are expected. Monthly stipend listed.",
+    "tags": ["Python", "Machine Learning", "SQL"],
+    "postedAt": "2026-09-18T15:45:00.000Z"
+  },
+  {
+    "id": "devrel-parttime",
+    "title": "Developer Advocate",
+    "company": "Cobalt Cloud",
+    "location": "Remote (Global)",
+    "remote": true,
+    "type": "Part-time",
+    "salaryMin": 40000,
+    "salaryMax": 55000,
+    "description": "Part-time developer advocate to grow our open-source community. Create tutorials, speak at meetups, and gather product feedback from developers. Great writing skills and a track record of building in public are essential.",
+    "tags": ["Community", "Content", "Open Source"],
+    "postedAt": "2026-09-20T11:00:00.000Z"
+  }
+]
