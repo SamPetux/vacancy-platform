@@ -59,7 +59,26 @@ class FeedService:
             select(CollectionRun).order_by(CollectionRun.started_at.desc()).limit(1)
         )
         last_run = run_result.scalar_one_or_none()
-        stats = (last_run.stats if last_run else {}) or {}
+        run_stats = (last_run.stats if last_run else {}) or {}
+
+        status_rows = await self._session.execute(
+            select(Vacancy.moderation_status, func.count())
+            .group_by(Vacancy.moderation_status)
+        )
+        by_status = {
+            (getattr(status, "value", status)): int(count)
+            for status, count in status_rows.all()
+        }
+
+        source_rows = await self._session.execute(
+            select(Source.source_type, func.count())
+            .join(Vacancy, Vacancy.source_id == Source.id)
+            .group_by(Source.source_type)
+        )
+        by_source = {
+            str(getattr(source_type, "value", source_type)): int(count)
+            for source_type, count in source_rows.all()
+        }
 
         avg_result = await self._session.execute(
             select(
@@ -73,15 +92,21 @@ class FeedService:
         return DashboardStats(
             system_status="ok",
             last_collection_at=last_run.finished_at if last_run else None,
-            vk_posts=int(stats.get("vk_posts") or 0),
-            vacancies_detected=int(stats.get("vacancies_detected") or 0),
-            superjob_fetched=int(stats.get("superjob_fetched") or 0),
-            trudvsem_fetched=int(stats.get("trudvsem_fetched") or 0),
-            duplicates=int(stats.get("duplicates") or 0),
-            rejected=int(stats.get("rejected") or 0),
-            ready=int(stats.get("ready") or 0),
-            scored=int(stats.get("scored") or 0),
-            not_vacancy=int(stats.get("not_vacancy") or 0),
+            vk_posts=by_source.get("vk", int(run_stats.get("vk_posts") or 0)),
+            vacancies_detected=sum(by_status.values()),
+            superjob_fetched=by_source.get("superjob", int(run_stats.get("superjob_fetched") or 0)),
+            trudvsem_fetched=by_source.get(
+                "trudvsem", int(run_stats.get("trudvsem_fetched") or 0)
+            ),
+            duplicates=by_status.get("duplicate", int(run_stats.get("duplicates") or 0)),
+            rejected=by_status.get(
+                "rejected_automatically", int(run_stats.get("rejected") or 0)
+            ),
+            ready=by_status.get(
+                "ready_for_publication", int(run_stats.get("ready") or 0)
+            ),
+            scored=by_status.get("scored", int(run_stats.get("scored") or 0)),
+            not_vacancy=int(run_stats.get("not_vacancy") or 0),
             avg_vqs=float(avg_vqs) if avg_vqs is not None else None,
             avg_feed_score=float(avg_feed) if avg_feed is not None else None,
             top_by_feed_score=top,

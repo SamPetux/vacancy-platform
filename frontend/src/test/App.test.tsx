@@ -68,5 +68,8 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: /Нижний Новгород/i })).toBeInTheDocument()
     expect(await screen.findByTestId('api-status')).toHaveTextContent('OK')
     expect(await screen.findByTestId('feed-list')).toHaveTextContent('Аналитик')
+    expect(await screen.findByTestId('feed-scores')).toHaveTextContent('VQS')
+    expect(screen.getByTestId('feed-scores')).toHaveTextContent('81')
+    expect(screen.getByTestId('collection-stats')).toHaveTextContent('Ср. FeedScore')
   })
 })

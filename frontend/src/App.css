@@ -141,16 +141,132 @@
   color: #5c6370;
 }
 
-.feed-title {
-  font-weight: 600;
+.feed-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
   margin-bottom: 0.2rem;
 }
 
-.feed-meta,
-.feed-scores {
+.feed-title {
+  font-weight: 600;
+}
+
+.feed-score-badge {
+  flex-shrink: 0;
+  min-width: 2.5rem;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1.2;
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+  background: #f0f2f5;
+}
+
+.feed-meta {
   font-size: 0.85rem;
   color: #5c6370;
   margin-bottom: 0.15rem;
+}
+
+.feed-scores {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+  margin: 0.55rem 0 0.35rem;
+  max-width: 22rem;
+}
+
+.score-meter {
+  min-width: 0;
+}
+
+.score-meter-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.2rem;
+  font-size: 0.75rem;
+}
+
+.score-meter-label {
+  color: #5c6370;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.score-meter-value {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.score-meter-track {
+  height: 6px;
+  border-radius: 3px;
+  background: #e6e9ef;
+  overflow: hidden;
+}
+
+.score-meter-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: #8b919a;
+  transition: width 0.25s ease;
+}
+
+.score-meter--high .score-meter-value,
+.score-text--high {
+  color: #1b6b3a;
+}
+
+.score-meter--high .score-meter-fill {
+  background: #2f9e5b;
+}
+
+.score-meter--mid .score-meter-value,
+.score-text--mid {
+  color: #8a6d1d;
+}
+
+.score-meter--mid .score-meter-fill {
+  background: #d4a017;
+}
+
+.score-meter--low .score-meter-value,
+.score-text--low {
+  color: #9b1c1c;
+}
+
+.score-meter--low .score-meter-fill {
+  background: #c44;
+}
+
+.score-meter--none .score-meter-value,
+.score-text--none {
+  color: #8b919a;
+}
+
+.feed-score-badge.score-text--high {
+  background: #e6f5eb;
+  color: #1b6b3a;
+}
+
+.feed-score-badge.score-text--mid {
+  background: #f8f1d8;
+  color: #8a6d1d;
+}
+
+.feed-score-badge.score-text--low {
+  background: #f8e4e4;
+  color: #9b1c1c;
+}
+
+.feed-flags {
+  font-size: 0.8rem;
+  color: #8b919a;
+  margin-bottom: 0.25rem;
 }
 
 .feed-link {

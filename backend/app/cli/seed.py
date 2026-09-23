@@ -28,6 +28,13 @@ VK_GROUPS = [
 SUPERJOB_TOWN = "Нижний Новгород"
 # OKATO/region code for Нижегородская область (TrudVsem Open Data).
 TRUDVSEM_REGION = "52"
+LOCATION_ALIASES = [
+    "нижний новгород",
+    "г нижний новгород",
+    "г. нижний новгород",
+    "н. новгород",
+    "н новгород",
+]
 
 
 async def seed() -> None:
@@ -53,6 +60,8 @@ async def seed() -> None:
                 supplement_enabled=True,
                 supplement_threshold=8,
                 trudvsem_region_code=TRUDVSEM_REGION,
+                location_aliases=list(LOCATION_ALIASES),
+                allow_remote=True,
                 is_active=True,
             )
             session.add(city)
@@ -66,6 +75,8 @@ async def seed() -> None:
             city.supplement_enabled = True
             city.supplement_threshold = 8
             city.trudvsem_region_code = TRUDVSEM_REGION
+            city.location_aliases = list(LOCATION_ALIASES)
+            city.allow_remote = True
 
         for external_id, name, url in VK_GROUPS:
             existing = await session.execute(

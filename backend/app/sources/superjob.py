@@ -168,6 +168,8 @@ class SuperJobSourceAdapter(SourceAdapter):
         if isinstance(place_of_work, dict):
             remote_hint = str(place_of_work.get("title") or "")
 
+        work_address = str(item.get("address") or "").strip() or None
+
         url = str(item.get("link") or f"https://www.superjob.ru/vakansii/{vacancy_id}.html")
         media = extract_superjob_media(item)
         parts = [
@@ -177,6 +179,7 @@ class SuperJobSourceAdapter(SourceAdapter):
             f"Опыт: {experience_name}" if experience_name else "",
             f"Занятость: {schedule_name}" if schedule_name else "",
             f"Место работы: {remote_hint}" if remote_hint else "",
+            f"Адрес: {work_address}" if work_address else "",
             candidat,
             work,
         ]
@@ -190,11 +193,13 @@ class SuperJobSourceAdapter(SourceAdapter):
             "salary": salary_payload,
             "experience": {"name": experience_name} if experience_name else None,
             "employment": {"name": schedule_name} if schedule_name else None,
-            "schedule": (
-                {"name": schedule_name or remote_hint}
-                if (schedule_name or remote_hint)
-                else None
+            "schedule": {"name": schedule_name} if schedule_name else None,
+            "place_of_work": (
+                {"title": remote_hint}
+                if remote_hint
+                else (place_of_work if place_of_work else None)
             ),
+            "address": work_address,
             "published_at": created.isoformat() if created else None,
             "snippet": {
                 "requirement": candidat or None,

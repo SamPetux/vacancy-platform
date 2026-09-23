@@ -4,13 +4,15 @@ from __future__ import annotations
 
 import logging
 from datetime import UTC, datetime
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings, get_settings
-from app.models import City, Vacancy, VacancyScore, VacancyStatus
+from app.models import City, RawItem, Vacancy, VacancyScore, VacancyStatus
 from app.parsing.extract import parse_vacancy_text
+from app.parsing.location import OUT_OF_CITY_FLAG, build_location_policy, evaluate_work_location
 from app.scoring.feed_score import compute_feed_score
 from app.scoring.vqs import compute_vqs
 from app.services.collection import CollectionPipeline, _component_value
@@ -45,9 +47,17 @@ async def rescore_city(
     category_counts: dict[str, int] = {}
     company_counts: dict[str, int] = {}
     updated = 0
+    out_of_city = 0
+    location_policy = build_location_policy(
+        city_name=city.name,
+        region_name=city.region,
+        aliases=[str(a) for a in (city.location_aliases or [])],
+        allow_remote=bool(city.allow_remote),
+    )
 
     for vac in vacancies:
-        parsed = parse_vacancy_text(vac.raw_text)
+        structured = await _load_structured(session, vac.raw_item_id)
+        parsed = parse_vacancy_text(vac.raw_text, structured=structured)
         vac.title = parsed.title or vac.title
         vac.company_name = parsed.company_name or vac.company_name
         vac.category = parsed.category
@@ -56,13 +66,49 @@ async def rescore_city(
         vac.salary_to = float(parsed.salary_to) if parsed.salary_to else vac.salary_to
         vac.schedule = parsed.schedule or vac.schedule
         vac.hours_per_day = parsed.hours_per_day or vac.hours_per_day
-        vac.remote_type = parsed.remote_type or vac.remote_type
+        # Recompute remote from current text; do not keep sticky false positives.
+        vac.remote_type = parsed.remote_type
         vac.experience_required = parsed.experience_required or vac.experience_required
         vac.requirements = parsed.requirements or vac.requirements
         vac.duties = parsed.duties or vac.duties
         vac.contact = parsed.contact or vac.contact
         vac.contact_type = parsed.contact_type or vac.contact_type
+        vac.address = parsed.address or vac.address
         vac.clean_text = parsed.clean_text
+
+        location = evaluate_work_location(
+            text=vac.raw_text,
+            policy=location_policy,
+            address=vac.address,
+            remote_type=parsed.remote_type,
+            schedule=parsed.schedule or vac.schedule,
+            structured=structured,
+        )
+        if location.is_remote:
+            vac.remote_type = "remote"
+        elif location.work_location:
+            vac.remote_type = None
+        if location.work_location and (
+            not vac.address or vac.address.strip().lower() in {"не имеет значения"}
+        ):
+            vac.address = location.work_location[:512]
+
+        if not location.allowed:
+            vac.moderation_status = VacancyStatus.REJECTED_AUTOMATICALLY
+            vac.flags = [location.flag or OUT_OF_CITY_FLAG]
+            vac.score_explanation = {
+                "location": {
+                    "reason": location.reason,
+                    "work_location": location.work_location,
+                    "is_remote": location.is_remote,
+                }
+            }
+            vac.quality_score = None
+            vac.feed_score = None
+            vac.ranked_position = None
+            out_of_city += 1
+            updated += 1
+            continue
 
         vqs = compute_vqs(parsed, vac.raw_text)
         feed = compute_feed_score(
@@ -76,7 +122,15 @@ async def rescore_city(
         vac.quality_score = vqs.total
         vac.feed_score = feed.score
         vac.flags = vqs.flags
-        vac.score_explanation = {"vqs": vqs.explanation, "feed": feed.explanation}
+        vac.score_explanation = {
+            "vqs": vqs.explanation,
+            "feed": feed.explanation,
+            "location": {
+                "reason": location.reason,
+                "work_location": location.work_location,
+                "is_remote": location.is_remote,
+            },
+        }
         vac.scored_at = datetime.now(UTC)
 
         hard = {"PAYMENT_REQUIRED", "MLM_SUSPECTED", "CASINO"}
@@ -111,5 +165,17 @@ async def rescore_city(
     await session.flush()
     ready = await CollectionPipeline(session, settings)._rank_for_feed(city)  # noqa: SLF001
     await session.commit()
-    logger.info("rescore_complete", extra={"updated": updated, "ready": ready})
-    return {"updated": updated, "ready": ready}
+    logger.info(
+        "rescore_complete",
+        extra={"updated": updated, "ready": ready, "out_of_city": out_of_city},
+    )
+    return {"updated": updated, "ready": ready, "out_of_city": out_of_city}
+
+
+async def _load_structured(session: AsyncSession, raw_item_id: Any) -> dict[str, Any] | None:
+    if raw_item_id is None:
+        return None
+    raw = await session.get(RawItem, raw_item_id)
+    if raw is None or not isinstance(raw.raw_payload, dict):
+        return None
+    return raw.raw_payload

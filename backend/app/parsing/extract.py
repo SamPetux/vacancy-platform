@@ -143,6 +143,17 @@ def parse_vacancy_text(
                 result.experience_required = label
                 break
 
+    if not result.address:
+        addr_m = re.search(r"(?im)^адрес\s*[:\-]\s*(.+)$", text)
+        if addr_m:
+            result.address = addr_m.group(1).strip()[:512]
+        else:
+            place_m = re.search(r"(?im)^место\s+работы\s*[:\-]\s*(.+)$", text)
+            if place_m:
+                place_val = place_m.group(1).strip()
+                if not re.match(r"(?i)^не\s+имеет\s+значения", place_val):
+                    result.address = place_val[:512]
+
     if not result.contact:
         pm = _PHONE_RE.search(text)
         if pm:
@@ -195,7 +206,24 @@ def _apply_structured(result: ParsedVacancy, data: dict[str, Any]) -> None:
         result.experience_required = str(experience["name"])
     schedule = data.get("schedule") or {}
     if isinstance(schedule, dict) and schedule.get("name"):
-        result.schedule = str(schedule["name"])
+        schedule_name = str(schedule["name"])
+        result.schedule = schedule_name
+        if re.search(r"(?i)удал[её]нн|дистанционн|\bremote\b", schedule_name):
+            result.remote_type = "remote"
+    place = data.get("place_of_work")
+    place_title = None
+    if isinstance(place, dict):
+        place_title = place.get("title") or place.get("name")
+    elif isinstance(place, str):
+        place_title = place
+    if place_title:
+        place_str = str(place_title)
+        if re.search(r"(?i)удал[её]нн|дистанционн|\bremote\b|из\s+дома", place_str):
+            result.remote_type = "remote"
+            if not result.schedule:
+                result.schedule = "удалённо"
+    if data.get("address"):
+        result.address = str(data["address"])[:512]
     roles = data.get("professional_roles") or []
     if roles and isinstance(roles, list) and isinstance(roles[0], dict):
         result.professional_role = str(roles[0].get("name") or "")

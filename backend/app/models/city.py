@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any
 from uuid import UUID, uuid4
 
 from sqlalchemy import Boolean, DateTime, Float, Integer, String, func
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -30,6 +32,20 @@ class City(Base):
     hh_area_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # Open Data region code for Работа России (e.g. "52" for Нижегородская область).
     trudvsem_region_code: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    # Normalized name variants for work-location matching (city config, not code branches).
+    location_aliases: Mapped[list[Any]] = mapped_column(
+        JSONB,
+        nullable=False,
+        default=list,
+        server_default="[]",
+    )
+    # Remote roles are allowed even when work place is outside the city.
+    allow_remote: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+        server_default="true",
+    )
 
     min_vqs: Mapped[float] = mapped_column(
         Float,

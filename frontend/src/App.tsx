@@ -51,6 +51,37 @@ function formatSalary(from: number | null, to: number | null): string {
   return 'не указана'
 }
 
+function scoreTier(value: number | null | undefined): 'high' | 'mid' | 'low' | 'none' {
+  if (value == null || Number.isNaN(value)) return 'none'
+  if (value >= 75) return 'high'
+  if (value >= 55) return 'mid'
+  return 'low'
+}
+
+function ScoreMeter({
+  label,
+  value,
+  testId,
+}: {
+  label: string
+  value: number | null | undefined
+  testId?: string
+}) {
+  const tier = scoreTier(value)
+  const pct = value == null ? 0 : Math.max(0, Math.min(100, value))
+  return (
+    <div className={`score-meter score-meter--${tier}`} data-testid={testId}>
+      <div className="score-meter-head">
+        <span className="score-meter-label">{label}</span>
+        <span className="score-meter-value">{value == null ? '—' : Math.round(value)}</span>
+      </div>
+      <div className="score-meter-track" aria-hidden>
+        <div className="score-meter-fill" style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  )
+}
+
 function App() {
   const [health, setHealth] = useState<HealthPayload | null>(null)
   const [stats, setStats] = useState<DashboardStats | null>(null)
@@ -157,6 +188,18 @@ function App() {
               <span className="stat-label">В ленту</span>
               <span className="stat-value">{stats.ready}</span>
             </div>
+            <div className="stat">
+              <span className="stat-label">Ср. VQS</span>
+              <span className={`stat-value score-text score-text--${scoreTier(stats.avg_vqs)}`}>
+                {stats.avg_vqs != null ? Math.round(stats.avg_vqs) : '—'}
+              </span>
+            </div>
+            <div className="stat">
+              <span className="stat-label">Ср. FeedScore</span>
+              <span className={`stat-value score-text score-text--${scoreTier(stats.avg_feed_score)}`}>
+                {stats.avg_feed_score != null ? Math.round(stats.avg_feed_score) : '—'}
+              </span>
+            </div>
           </section>
         )}
 
@@ -167,7 +210,15 @@ function App() {
               <li key={item.id} className="feed-item">
                 <div className="feed-rank">#{item.ranked_position ?? '—'}</div>
                 <div className="feed-body">
-                  <div className="feed-title">{item.title || 'Без названия'}</div>
+                  <div className="feed-title-row">
+                    <div className="feed-title">{item.title || 'Без названия'}</div>
+                    <div
+                      className={`feed-score-badge score-text--${scoreTier(item.feed_score)}`}
+                      title="FeedScore — итоговый приоритет в ленте"
+                    >
+                      {item.feed_score != null ? Math.round(item.feed_score) : '—'}
+                    </div>
+                  </div>
                   <div className="feed-meta">
                     {item.company_name || 'Компания не указана'} · {item.category || 'other'} ·{' '}
                     {item.source_type || 'source'}
@@ -178,11 +229,13 @@ function App() {
                     {item.schedule ? ` · ${item.schedule}` : ''}
                     {item.experience_required ? ` · ${item.experience_required}` : ''}
                   </div>
-                  <div className="feed-scores">
-                    VQS {item.quality_score?.toFixed(0) ?? '—'} · FeedScore{' '}
-                    {item.feed_score?.toFixed(0) ?? '—'}
-                    {item.flags?.length ? ` · ${item.flags.join(', ')}` : ''}
+                  <div className="feed-scores" data-testid="feed-scores">
+                    <ScoreMeter label="VQS" value={item.quality_score} />
+                    <ScoreMeter label="FeedScore" value={item.feed_score} />
                   </div>
+                  {item.flags?.length ? (
+                    <div className="feed-flags">{item.flags.join(' · ')}</div>
+                  ) : null}
                   {item.source_url && (
                     <a className="feed-link" href={item.source_url} target="_blank" rel="noreferrer">
                       Открыть оригинал

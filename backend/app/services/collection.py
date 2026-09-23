@@ -27,6 +27,7 @@ from app.models import (
     VacancyStatus,
 )
 from app.parsing.extract import parse_vacancy_text
+from app.parsing.location import OUT_OF_CITY_FLAG, build_location_policy, evaluate_work_location
 from app.parsing.vacancy_detect import is_vacancy_text
 from app.scoring.feed_score import compute_feed_score
 from app.scoring.vqs import compute_vqs
@@ -74,6 +75,7 @@ class CollectionPipeline:
             "scored": 0,
             "ready": 0,
             "not_vacancy": 0,
+            "out_of_city": 0,
             "errors": 0,
         }
 
@@ -279,13 +281,19 @@ class CollectionPipeline:
             "rejected": 0,
             "scored": 0,
             "not_vacancy": 0,
+            "out_of_city": 0,
         }
 
         window_start = datetime.now(UTC) - timedelta(days=self._settings.dedup_window_days)
         recent = await self._load_recent_vacancies(city.id, window_start)
         category_counts: dict[str, int] = {}
         company_counts: dict[str, int] = {}
-
+        location_policy = build_location_policy(
+            city_name=city.name,
+            region_name=city.region,
+            aliases=[str(a) for a in (city.location_aliases or [])],
+            allow_remote=bool(city.allow_remote),
+        )
         for raw in raw_items:
             source = await self._session.get(Source, raw.source_id)
             structured_hint = False
@@ -358,6 +366,37 @@ class CollectionPipeline:
                 raw.status = RawItemStatus.PROCESSED
                 continue
 
+            location = evaluate_work_location(
+                text=text,
+                policy=location_policy,
+                address=parsed.address,
+                remote_type=parsed.remote_type,
+                schedule=parsed.schedule,
+                structured=structured_dict,
+            )
+            if location.is_remote and not vacancy.remote_type:
+                vacancy.remote_type = "remote"
+                parsed.remote_type = "remote"
+            if location.work_location and not vacancy.address:
+                vacancy.address = location.work_location[:512]
+
+            if not location.allowed:
+                vacancy.moderation_status = VacancyStatus.REJECTED_AUTOMATICALLY
+                vacancy.flags = [location.flag or OUT_OF_CITY_FLAG]
+                vacancy.score_explanation = {
+                    "location": {
+                        "reason": location.reason,
+                        "work_location": location.work_location,
+                        "is_remote": location.is_remote,
+                    }
+                }
+                stats["rejected"] += 1
+                stats["out_of_city"] += 1
+                self._session.add(vacancy)
+                raw.status = RawItemStatus.PROCESSED
+                recent.append(vacancy)
+                continue
+
             vqs = compute_vqs(
                 parsed,
                 text,
@@ -378,6 +417,11 @@ class CollectionPipeline:
             vacancy.score_explanation = {
                 "vqs": vqs.explanation,
                 "feed": feed.explanation,
+                "location": {
+                    "reason": location.reason,
+                    "work_location": location.work_location,
+                    "is_remote": location.is_remote,
+                },
             }
             vacancy.scored_at = datetime.now(UTC)
 

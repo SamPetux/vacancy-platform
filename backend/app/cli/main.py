@@ -104,6 +104,12 @@ def main() -> None:
     )
     refresh_media_parser.add_argument("--city", default="nizhny-novgorod")
 
+    backfill_sj = sub.add_parser(
+        "backfill-superjob-address",
+        help="Fetch SuperJob address field and rescore city feed",
+    )
+    backfill_sj.add_argument("--city", default="nizhny-novgorod")
+
     args = parser.parse_args()
     if args.command == "seed":
         asyncio.run(seed())
@@ -115,6 +121,10 @@ def main() -> None:
         asyncio.run(rescore(args.city))
     elif args.command == "refresh-media":
         asyncio.run(refresh_media(args.city))
+    elif args.command == "backfill-superjob-address":
+        from app.cli.backfill_superjob_address import backfill_superjob_addresses
+
+        print(asyncio.run(backfill_superjob_addresses(args.city)))
 
 if __name__ == "__main__":
     main()
