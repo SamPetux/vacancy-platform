@@ -1,0 +1,41 @@
+---
+description: Verification requirements before completing development tasks
+---
+
+# Quality Gate
+
+Never report a coding task as complete immediately after writing code.
+
+Run relevant validation.
+
+Backend:
+
+ruff check .
+mypy app
+pytest
+
+Frontend:
+
+npm run lint
+npm run test -- --run
+npm run build
+
+UI functionality:
+
+verify the primary user flow using Playwright.
+
+Docker:
+
+docker compose config --quiet
+
+If any command fails:
+
+investigate it
+
+fix the problem
+
+run the check again
+
+Do not silently ignore failing tests.
+
+Do not delete or weaken tests merely to make the suite pass.

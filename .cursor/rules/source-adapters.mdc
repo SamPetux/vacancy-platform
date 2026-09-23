@@ -1,0 +1,73 @@
+---
+description: Rules for implementing vacancy data sources
+---
+
+# Source Adapter Rules
+
+Every external vacancy source MUST implement the common SourceAdapter abstraction.
+
+Never expose source-specific response formats outside the adapter.
+
+Before writing a scraper investigate in this order:
+
+1. official API
+2. RSS or feeds
+3. public structured JSON
+4. static HTML
+5. browser automation
+
+Browser automation is a last resort.
+
+---
+
+Every adapter must support:
+
+fetch_new_items()
+
+health_check()
+
+rate limiting
+
+timeouts
+
+retry with backoff
+
+logging
+
+incremental collection
+
+---
+
+Do not fetch the complete source history on every execution.
+
+Maintain source cursors such as:
+
+last_item_id
+
+last_timestamp
+
+pagination cursor
+
+---
+
+Every received item must keep provenance:
+
+source_id
+
+source_item_id
+
+source_url
+
+source_created_at
+
+first_seen_at
+
+raw_payload
+
+---
+
+Do not perform scoring inside SourceAdapter.
+
+Adapter responsibilities end after retrieving and normalizing the source item.
+
+Pipeline responsibilities must remain separate.
