@@ -349,6 +349,7 @@ class CollectionPipeline:
                 experience_required=parsed.experience_required,
                 requirements=parsed.requirements,
                 duties=parsed.duties,
+                benefits=parsed.benefits,
                 address=parsed.address,
                 contact_type=parsed.contact_type,
                 contact=parsed.contact,

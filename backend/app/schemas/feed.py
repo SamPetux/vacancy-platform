@@ -35,11 +35,13 @@ class VacancyDetail(VacancyListItem):
     clean_text: str | None
     requirements: str | None
     duties: str | None
+    benefits: str | None = None
     contact: str | None
     score_explanation: dict[str, Any] | None
     professional_role: str | None
     remote_type: str | None
     address: str | None
+    district: str | None = None
 
 
 class DashboardStats(BaseModel):

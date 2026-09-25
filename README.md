@@ -4,7 +4,7 @@ Multi-city vacancy aggregation: collect → normalize → deduplicate → score 
 
 First production city: **Nizhny Novgorod**. Adding a city is configuration, not a new application.
 
-> VK auto-publish and commercial placements are out of MVP scope.
+> VK wall publishing is optional (`VK_PUBLISH_*`). Commercial placements are out of MVP.
 
 ## Architecture (Stage 1)
 
@@ -99,7 +99,18 @@ make docker-check
 13. Analytics
 14–15. NN MVP + second city smoke test
 
-See `docs/ARCHITECTURE.md`, `docs/SCORING.md`, `docs/DESIGN.md`, and `AGENTS.md`.
+See `docs/ARCHITECTURE.md`, `docs/SCORING.md`, `docs/DESIGN.md`, `docs/DEPLOY.md`, and `AGENTS.md`.
+
+## Production deploy (Yandex Cloud)
+
+Рекомендуемый старт: **1× Compute Cloud VM** + `docker-compose.prod.yml`
+(Postgres и Redis на той же машине). Подробно: [`docs/DEPLOY.md`](docs/DEPLOY.md).
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml exec api alembic upgrade head
+docker compose -f docker-compose.prod.yml exec api python -m app.cli seed
+```
 
 ## Secrets
 

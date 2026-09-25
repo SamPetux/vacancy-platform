@@ -10,8 +10,27 @@ celery_app = Celery(
     "vacancy_platform",
     broker=settings.broker_url,
     backend=settings.result_backend,
-    include=["app.tasks.health", "app.tasks.collection"],
+    include=[
+        "app.tasks.health",
+        "app.tasks.collection",
+        "app.tasks.publish",
+    ],
 )
+
+_beat: dict[str, dict[str, object]] = {
+    "daily-nn-collection": {
+        "task": "app.tasks.collection.collect_city",
+        "schedule": 60 * 60 * 24,
+        "args": ("nizhny-novgorod",),
+    },
+}
+
+if settings.vk_publish_enabled:
+    _beat["vk-publish-next"] = {
+        "task": "app.tasks.publish.publish_next_vk",
+        "schedule": float(settings.vk_publish_interval_seconds),
+        "args": ("nizhny-novgorod",),
+    }
 
 celery_app.conf.update(
     task_serializer="json",
@@ -24,11 +43,5 @@ celery_app.conf.update(
     worker_prefetch_multiplier=1,
     task_default_retry_delay=60,
     task_annotations={"*": {"max_retries": 3}},
-    beat_schedule={
-        "daily-nn-collection": {
-            "task": "app.tasks.collection.collect_city",
-            "schedule": 60 * 60 * 24,
-            "args": ("nizhny-novgorod",),
-        },
-    },
+    beat_schedule=_beat,
 )

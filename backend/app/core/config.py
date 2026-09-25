@@ -49,6 +49,14 @@ class Settings(BaseSettings):
     llm_api_key: SecretStr | None = None
     sentry_dsn: str | None = None
 
+    # VK publication destination («Работа / Нижний»)
+    vk_publish_group_id: str = "241679288"
+    vk_publish_token: SecretStr | None = None  # community or user token with wall
+    vk_publish_user_token: SecretStr | None = None  # user token for photo upload
+    vk_publish_photo_attachment: str | None = None  # cached photo-{owner}_{id}
+    vk_publish_interval_seconds: int = 3600  # 60 min now; later 90 min
+    vk_publish_enabled: bool = False
+
     # Collection defaults
     collection_lookback_hours: int = 48
     dedup_window_days: int = 7
@@ -69,6 +77,24 @@ class Settings(BaseSettings):
     def vk_access_token(self) -> str | None:
         """Return VK access token without logging it."""
         for candidate in (self.vk_service_token, self.vk_token):
+            if candidate is not None:
+                value = candidate.get_secret_value().strip()
+                if value:
+                    return value
+        return None
+
+    def vk_wall_token(self) -> str | None:
+        """Token capable of wall.post (community/user), not the service token."""
+        for candidate in (self.vk_publish_token, self.vk_token):
+            if candidate is not None:
+                value = candidate.get_secret_value().strip()
+                if value:
+                    return value
+        return None
+
+    def vk_photo_upload_token(self) -> str | None:
+        """User token preferred for photos.getWallUploadServer."""
+        for candidate in (self.vk_publish_user_token, self.vk_publish_token, self.vk_token):
             if candidate is not None:
                 value = candidate.get_secret_value().strip()
                 if value:

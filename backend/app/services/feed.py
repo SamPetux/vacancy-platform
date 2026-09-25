@@ -47,11 +47,13 @@ class FeedService:
             clean_text=vacancy.clean_text,
             requirements=vacancy.requirements,
             duties=vacancy.duties,
+            benefits=vacancy.benefits,
             contact=vacancy.contact,
             score_explanation=vacancy.score_explanation,
             professional_role=vacancy.professional_role,
             remote_type=vacancy.remote_type,
             address=vacancy.address,
+            district=vacancy.district,
         )
 
     async def dashboard(self) -> DashboardStats:

@@ -83,6 +83,19 @@ async def refresh_media(city_slug: str) -> None:
     await dispose_db()
 
 
+async def publish_once(city_slug: str) -> None:
+    settings = get_settings()
+    configure_logging(settings)
+    init_db(settings)
+    factory = get_session_factory()
+    async with factory() as session:
+        from app.services.vk_publish import VkPublishService
+
+        result = await VkPublishService(session, settings).publish_next(city_slug)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+    await dispose_db()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Vacancy platform CLI")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -110,6 +123,12 @@ def main() -> None:
     )
     backfill_sj.add_argument("--city", default="nizhny-novgorod")
 
+    publish_parser = sub.add_parser(
+        "publish-once",
+        help="Publish one top READY vacancy to VK (club from VK_PUBLISH_GROUP_ID)",
+    )
+    publish_parser.add_argument("--city", default="nizhny-novgorod")
+
     args = parser.parse_args()
     if args.command == "seed":
         asyncio.run(seed())
@@ -125,6 +144,9 @@ def main() -> None:
         from app.cli.backfill_superjob_address import backfill_superjob_addresses
 
         print(asyncio.run(backfill_superjob_addresses(args.city)))
+    elif args.command == "publish-once":
+        asyncio.run(publish_once(args.city))
+
 
 if __name__ == "__main__":
     main()

@@ -10,6 +10,7 @@ from app.models.enums import (
     SourceType,
     VacancyStatus,
 )
+from app.models.publication_draft import PublicationDraft
 from app.models.raw_item import RawItem
 from app.models.scoring_config import ScoringConfig
 from app.models.source import Source
@@ -21,6 +22,7 @@ __all__ = [
     "CollectionRun",
     "CollectionRunStatus",
     "Company",
+    "PublicationDraft",
     "RawItem",
     "RawItemStatus",
     "ScoringConfig",

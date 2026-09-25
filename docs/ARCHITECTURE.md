@@ -186,9 +186,13 @@ VK + SuperJob + TrudVsem (supplement)
 Excluded:
 
 HH.ru
-VK automatic publishing
 payments
 commercial placements
 employer cabinet
 billing
 advertising
+
+VK wall publishing is optional and gated by `VK_PUBLISH_ENABLED`.
+Destination community is configured via `VK_PUBLISH_GROUP_ID` (default: Работа / Нижний).
+Requires a community or user token with wall permission (`VK_PUBLISH_TOKEN`).
+Default brand image is used until vacancy-native media upload is enabled.

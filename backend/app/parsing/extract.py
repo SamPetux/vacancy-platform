@@ -6,6 +6,8 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
+from app.parsing.sections import merge_sections, split_description_sections
+
 
 @dataclass
 class ParsedVacancy:
@@ -24,6 +26,7 @@ class ParsedVacancy:
     contact_type: str | None = None
     requirements: str | None = None
     duties: str | None = None
+    benefits: str | None = None
     category: str | None = None
     professional_role: str | None = None
     clean_text: str | None = None
@@ -168,19 +171,39 @@ def parse_vacancy_text(
         result.category = _guess_category(result.title + " " + clean)
         result.professional_role = result.title
 
-    # Requirements / duties heuristics
-    req_m = re.search(r"(?i)требования[:\s]+(.{20,400}?)(?:\n\n|обязанност|условия|$)", text)
-    if req_m:
-        result.requirements = req_m.group(1).strip()
-    duty_m = re.search(r"(?i)обязанност\w*[:\s]+(.{20,400}?)(?:\n\n|требования|условия|$)", text)
-    if duty_m:
-        result.duties = duty_m.group(1).strip()
+    # Requirements / duties / benefits — prefer section headers over crude regex
+    if not result.duties or not result.requirements or not result.benefits:
+        merged = merge_sections(
+            duties=result.duties,
+            requirements=result.requirements,
+            benefits=result.benefits,
+            blob=text,
+        )
+        result.duties = result.duties or merged.duties
+        result.requirements = result.requirements or merged.requirements
+        result.benefits = result.benefits or merged.benefits
+
+    if not result.requirements:
+        req_m = re.search(
+            r"(?i)требования[:\s]+(.{20,400}?)(?:\n\n|обязанност|условия|$)",
+            text,
+        )
+        if req_m:
+            result.requirements = req_m.group(1).strip()
+    if not result.duties:
+        duty_m = re.search(
+            r"(?i)обязанност\w*[:\s]+(.{20,400}?)(?:\n\n|требования|условия|$)",
+            text,
+        )
+        if duty_m:
+            result.duties = duty_m.group(1).strip()
 
     result.signals = {
         "has_salary": result.salary_from is not None or result.salary_to is not None,
         "has_company": bool(result.company_name),
         "has_schedule": bool(result.schedule),
         "has_contact": bool(result.contact),
+        "has_benefits": bool(result.benefits),
         "category": result.category,
     }
     return result
@@ -230,10 +253,26 @@ def _apply_structured(result: ParsedVacancy, data: dict[str, Any]) -> None:
         result.category = _guess_category(result.professional_role or result.title or "")
     snippet = data.get("snippet") or {}
     if isinstance(snippet, dict):
-        if snippet.get("requirement"):
-            result.requirements = str(snippet["requirement"])
-        if snippet.get("responsibility"):
-            result.duties = str(snippet["responsibility"])
+        requirement_blob = snippet.get("requirement")
+        responsibility = snippet.get("responsibility")
+        if responsibility:
+            result.duties = str(responsibility)
+        if requirement_blob:
+            # SuperJob often dumps duties+requirements+offer into candidat
+            blob = str(requirement_blob)
+            split = split_description_sections(blob)
+            if split.duties or split.requirements or split.benefits:
+                if split.duties and not result.duties:
+                    result.duties = split.duties
+                result.requirements = split.requirements or (
+                    None if split.duties or split.benefits else blob
+                )
+                if split.benefits:
+                    result.benefits = split.benefits
+            else:
+                result.requirements = blob
+        if data.get("benefits") and not result.benefits:
+            result.benefits = str(data["benefits"])
 
 
 def _to_int(raw: str | None) -> int | None:

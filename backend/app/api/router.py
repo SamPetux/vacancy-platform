@@ -2,8 +2,9 @@
 
 from fastapi import APIRouter
 
-from app.api import feed, health
+from app.api import feed, health, publication
 
 api_router = APIRouter()
 api_router.include_router(health.router)
 api_router.include_router(feed.router)
+api_router.include_router(publication.router)
