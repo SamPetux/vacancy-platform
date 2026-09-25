@@ -43,6 +43,7 @@ docker/data/
 
 # Celery
 celerybeat-schedule
+celerybeat-schedule.db
 celerybeat.pid
 
 # Playwright
