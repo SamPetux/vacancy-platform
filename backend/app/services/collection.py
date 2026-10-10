@@ -10,6 +10,7 @@ from uuid import UUID
 from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.content.audience_interest import compute_audience_interest
 from app.core.config import Settings, get_settings
 from app.deduplication.service import build_fingerprint, is_near_duplicate
 from app.models import (
@@ -441,21 +442,32 @@ class CollectionPipeline:
 
             self._session.add(vacancy)
             await self._session.flush()
-            self._session.add(
-                VacancyScore(
-                    vacancy_id=vacancy.id,
-                    salary=_component_value(vqs, "salary"),
-                    workload=_component_value(vqs, "workload"),
-                    flexibility=_component_value(vqs, "flexibility"),
-                    company=_component_value(vqs, "company"),
-                    experience_value=_component_value(vqs, "experience_value"),
-                    accessibility=_component_value(vqs, "accessibility"),
-                    transparency=_component_value(vqs, "transparency"),
-                    vqs_total=vqs.total,
-                    feed_score=feed.score,
-                    components_detail=vacancy.score_explanation or {},
-                )
+            score_row = VacancyScore(
+                vacancy_id=vacancy.id,
+                salary=_component_value(vqs, "salary"),
+                workload=_component_value(vqs, "workload"),
+                flexibility=_component_value(vqs, "flexibility"),
+                company=_component_value(vqs, "company"),
+                experience_value=_component_value(vqs, "experience_value"),
+                accessibility=_component_value(vqs, "accessibility"),
+                transparency=_component_value(vqs, "transparency"),
+                vqs_total=vqs.total,
+                feed_score=feed.score,
+                audience_interest=0.0,
+                components_detail=vacancy.score_explanation or {},
             )
+            # AIS uses VQS components; cohort enrichment happens at publish time.
+            ais = compute_audience_interest(vacancy, score_row)
+            score_row.audience_interest = ais.total
+            detail = dict(score_row.components_detail or {})
+            detail["audience_interest"] = ais.explanation
+            score_row.components_detail = detail
+            vacancy.audience_interest_score = ais.total
+            vacancy.score_explanation = {
+                **(vacancy.score_explanation or {}),
+                "audience_interest": ais.explanation,
+            }
+            self._session.add(score_row)
             recent.append(vacancy)
             raw.status = RawItemStatus.PROCESSED
 

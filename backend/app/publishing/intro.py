@@ -37,16 +37,29 @@ def _what_sentence(title: str, company: str, category: str, variant: int) -> str
         f"Новая позиция «{role}» в {company}.",
         f"Открыта роль {role} — {company}.",
         f"{role} в компании {company}.",
+        f"В {company} ищут {role}.",
+        f"Стоит взглянуть: {role} ({company}).",
+        f"Среди городских вакансий — {role} в {company}.",
     ]
     templates_no_company = [
         f"Открыта позиция «{role}».",
         f"В подборку добавлена вакансия: {role}.",
         f"Ищут специалиста на роль {role}.",
+        f"Заметили вакансию: {role}.",
+        f"В городе появилась роль {role}.",
     ]
-    if company:
-        return templates_with_company[variant % len(templates_with_company)]
-    _ = category
-    return templates_no_company[variant % len(templates_no_company)]
+    category_hooks = {
+        "it": f"В digital-сегменте открыта роль {role}"
+        + (f" — {company}." if company else "."),
+        "engineering": f"Инженерная вакансия: {role}"
+        + (f" ({company})." if company else "."),
+        "medicine": f"В медицине ищут {role}" + (f" — {company}." if company else "."),
+        "education": f"Для образования: {role}" + (f" в {company}." if company else "."),
+    }
+    pool = list(templates_with_company if company else templates_no_company)
+    if category in category_hooks:
+        pool.append(category_hooks[category])
+    return pool[variant % len(pool)]
 
 
 def _task_hint(vacancy: Vacancy, availability: FieldAvailability) -> str | None:

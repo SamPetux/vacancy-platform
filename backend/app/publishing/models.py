@@ -22,9 +22,14 @@ class ContentBlock(BaseModel):
 
 
 class EditorialRating(BaseModel):
-    grade: str
-    label: str
+    grade: str  # internal A+/A/B+/B — not rendered publicly by default
+    label: str  # public editorial marker (e.g. КАРЬЕРНЫЙ ШАГ)
     reason: str
+    creative_type: str | None = None
+    visual_family: str | None = None
+    layout_variant: str | None = None
+    confidence: float | None = None
+    show_grade_publicly: bool = False
 
 
 class PostDraft(BaseModel):

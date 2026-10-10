@@ -1,6 +1,6 @@
 # Vacancy Scoring
 
-There are TWO different metrics.
+There are THREE different metrics.
 
 Never merge them.
 
@@ -73,6 +73,43 @@ company diversity
 duplicate probability
 
 recent feed composition
+
+---
+
+# AudienceInterestScore
+
+AudienceInterestScore answers:
+
+"How interesting is this vacancy for a career-media audience, including people not actively job-hunting?"
+
+It must not simply duplicate VQS.
+
+Initial components (weights configurable):
+
+novelty_role
+
+employer_pull
+
+conditions_edge
+
+experience_value
+
+career_potential
+
+accessibility
+
+task_interest
+
+shareability
+
+CreativeContext interprets scores into an editorial marker and visual family.
+It does not change VQS or FeedScore.
+
+Public cards show editorial markers (e.g. КАРЬЕРНЫЙ ШАГ), not letter grades.
+Letter grades A+/A/B+/B remain internal for moderators and analytics.
+
+ABOVE_MARKET requires city+category cohort percentile (own DB sample ≥ 15),
+never a large salary figure alone.
 
 ---
 

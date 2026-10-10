@@ -57,6 +57,10 @@ class Settings(BaseSettings):
     vk_publish_interval_seconds: int = 3600  # 60 min now; later 90 min
     vk_publish_enabled: bool = False
 
+    # Content Engine — collections stay off until golden-set review
+    content_engine_collections_enabled: bool = False
+    content_engine_visual_enabled: bool = True
+
     # Collection defaults
     collection_lookback_hours: int = 48
     dedup_window_days: int = 7

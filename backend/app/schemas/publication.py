@@ -19,6 +19,11 @@ class PublicationPreviewOut(BaseModel):
     manually_edited: bool = False
     default_image_url: str = "/brand/vacancy-default.png"
     has_media: bool = False
+    creative_context: dict[str, Any] | None = None
+    visual: dict[str, Any] | None = None
+    composed_image_url: str | None = None
+    audience_interest_score: float | None = None
+    internal_grade: str | None = None
 
 
 class PublicationEditIn(BaseModel):

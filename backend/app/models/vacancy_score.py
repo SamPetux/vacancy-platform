@@ -65,6 +65,12 @@ class VacancyScore(Base):
         default=0.0,
         server_default="0",
     )
+    audience_interest: Mapped[float] = mapped_column(
+        Float,
+        nullable=False,
+        default=0.0,
+        server_default="0",
+    )
 
     components_detail: Mapped[dict[str, Any]] = mapped_column(
         JSONB,

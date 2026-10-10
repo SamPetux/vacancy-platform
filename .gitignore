@@ -50,3 +50,8 @@ celerybeat.pid
 test-results/
 playwright-report/
 blob-report/
+
+# Content Engine composed images (regenerate via script)
+assets/generated/**
+!assets/generated/.gitkeep
+!assets/generated/golden/.gitkeep

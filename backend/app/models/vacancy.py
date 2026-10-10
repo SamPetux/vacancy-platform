@@ -94,6 +94,7 @@ class Vacancy(Base):
 
     quality_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     feed_score: Mapped[float | None] = mapped_column(Float, nullable=True, index=True)
+    audience_interest_score: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     flags: Mapped[list[Any]] = mapped_column(
         JSONB,

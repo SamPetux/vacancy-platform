@@ -23,6 +23,17 @@ DEFAULT_VQS_WEIGHTS: dict[str, float] = {
     "transparency": 10,
 }
 
+DEFAULT_AIS_WEIGHTS: dict[str, float] = {
+    "novelty_role": 18,
+    "employer_pull": 12,
+    "conditions_edge": 16,
+    "experience_value": 14,
+    "career_potential": 12,
+    "accessibility": 10,
+    "task_interest": 10,
+    "shareability": 8,
+}
+
 
 class ScoringConfig(Base):
     """Active scoring configuration (null city_id = global default)."""
